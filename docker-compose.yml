@@ -1,0 +1,60 @@
+services:
+  client:
+    build: ./client
+    container_name: client
+    networks:
+      keepalivednet:
+        ipv4_address: 192.168.10.9
+    tty: true
+    depends_on:
+      - keepalived
+      - web1
+      - web2
+
+  keepalived:
+    build: ./keepalived
+    container_name: keepalived
+    networks:
+      keepalivednet:
+        ipv4_address: 192.168.10.10
+    tty: true
+    privileged: true
+    depends_on:
+      - web1
+      - web2
+    ports:
+      - "8080:80"
+    volumes:
+      - ./keepalived:/etc/keepalived
+      - ./log/keepalived:/var/log/keepalived
+
+  web1:
+    image: nginx:latest
+    container_name: web1
+    networks:
+      keepalivednet:
+        ipv4_address: 192.168.10.11
+    ports:
+      - "8081:80"
+    volumes:
+      - ./web1:/usr/share/nginx/html
+      - ./log/web1:/var/log/nginx
+
+  web2:
+    image: nginx:latest
+    container_name: web2
+    networks:
+      keepalivednet:
+        ipv4_address: 192.168.10.12
+    ports:
+      - "8082:80"
+    volumes:
+      - ./web2:/usr/share/nginx/html
+      - ./log/web2:/var/log/nginx
+
+networks:
+  keepalivednet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.10.0/24
